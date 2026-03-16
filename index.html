@@ -428,104 +428,104 @@
 
     </div>
 
-    <script>
-        const API_URL = "https://sim-api.fakcloud.tech/"; 
-        
-        const loader = document.getElementById('loader');
-        const resArea = document.getElementById('results-area');
-        const input = document.getElementById('target');
+<script>
 
-        // ✅ THEME INIT
-        const themeIcon = document.getElementById("themeIcon");
-        const savedTheme = localStorage.getItem("theme");
+const API_URL = "https://sim-api.fakcloud.tech/?number=";
 
-        if(savedTheme === "light"){
-            document.body.classList.add("light");
-            themeIcon.className = "fas fa-sun";
-        } else {
-            document.body.classList.remove("light");
-            themeIcon.className = "fas fa-moon";
-        }
+const loader = document.getElementById('loader');
+const resArea = document.getElementById('results-area');
+const input = document.getElementById('target');
 
-        function toggleTheme(){
-            document.body.classList.toggle("light");
+async function fetchData(){
 
-            if(document.body.classList.contains("light")){
-                localStorage.setItem("theme", "light");
-                themeIcon.className = "fas fa-sun";
-            } else {
-                localStorage.setItem("theme", "dark");
-                themeIcon.className = "fas fa-moon";
-            }
-        }
+const rawInput = input.value.trim();
+const cleanedNumber = rawInput.replace(/[^0-9]/g,'');
 
-        async function fetchData() {
-            const query = input.value.trim();
-            
-            if(query.length < 3) {
-                alert("Please enter a valid number.");
-                return;
-            }
+if(!cleanedNumber){
+alert("Enter valid Mobile Number or CNIC");
+return;
+}
 
-            // UI Reset
-            resArea.innerHTML = '';
-            resArea.style.display = 'block';
-            loader.style.display = 'block';
-            
-            try {
-                // Fake delay for 'Pro' feel
-                await new Promise(r => setTimeout(r, 800));
+loader.style.display="block";
+resArea.innerHTML="";
 
-                const req = await fetch(API_URL + query);
-                const json = await req.json();
-                
-                loader.style.display = 'none';
+try{
 
-                if(json.status === 'success') {
-                    renderCards(json.data);
-                } else {
-                    resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin-top:10px;">No Data Found</div>`;
-                }
+const response = await fetch(API_URL + cleanedNumber);
 
-            } catch (e) {
-                loader.style.display = 'none';
-                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin-top:10px;">Connection Error</div>`;
-            }
-        }
+const text = await response.text();
 
-        function renderCards(data) {
-            let records = [];
-            if (Array.isArray(data)) records = data;
-            else if (typeof data === 'object' && data !== null) records = [data];
+let data;
 
-            let html = '';
-            records.forEach((rec, idx) => {
-                html += `
-                <div class="data-card">
-                    <div class="dc-header">
-                        <span>RECORD #${idx + 1}</span>
-                        <span><i class="fas fa-check-circle"></i> VERIFIED</span>
-                    </div>
-                    <div class="dc-body">
-                `;
-                
-                for (const [key, val] of Object.entries(rec)) {
-                    if(key === 'response_code' || key === 'credit' || key === 'api_owner') continue;
-                    html += `
-                        <div class="dc-row">
-                            <span class="lbl">${key.toUpperCase()}</span>
-                            <span class="val">${val}</span>
-                        </div>
-                    `;
-                }
-                html += `</div></div>`;
-            });
+try{
+data = JSON.parse(text);
+}catch{
+throw new Error("Invalid JSON");
+}
 
-            resArea.innerHTML = html;
-        }
-        
-        // Enter key support
-        input.addEventListener("keypress", (e) => { if(e.key==="Enter") fetchData(); });
-    </script>
+loader.style.display="none";
+
+if(data.success){
+
+resArea.innerHTML = `
+
+<div class="data-card">
+
+<div class="dc-header">
+<span>IDENTITY RECORD</span>
+<span><i class="fas fa-check-circle"></i> VERIFIED</span>
+</div>
+
+<div class="dc-body">
+
+<div class="dc-row">
+<span class="lbl">NUMBER</span>
+<span class="val">${data.number || 'N/A'}</span>
+</div>
+
+<div class="dc-row">
+<span class="lbl">NAME</span>
+<span class="val">${data.name || 'N/A'}</span>
+</div>
+
+<div class="dc-row">
+<span class="lbl">CNIC</span>
+<span class="val">${data.cnic || 'N/A'}</span>
+</div>
+
+<div class="dc-row">
+<span class="lbl">ADDRESS</span>
+<span class="val">${data.address || 'N/A'}</span>
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}else{
+
+resArea.innerHTML=`<div style="text-align:center;color:red">No Data Found</div>`;
+
+}
+
+}catch(err){
+
+loader.style.display="none";
+
+resArea.innerHTML=`<div style="text-align:center;color:red">API Connection Failed</div>`;
+
+console.log(err);
+
+}
+
+}
+
+input.addEventListener("keypress",(e)=>{
+if(e.key==="Enter") fetchData();
+});
+
+</script>
 </body>
   </html>
